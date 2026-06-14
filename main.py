@@ -5,24 +5,29 @@ from constants import SCREEN_WIDTH, SCREEN_HEIGHT
 from player import Player
 from asteroid import Asteroid
 from asteroidfield import AsteroidField
+from shot import Shot
 
 def main():
     print(f"Starting Asteroifs with pygme verion: {pygame.version.ver}")
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-    dt = 0.0
+    
     updatable = pygame.sprite.Group()
     drawable = pygame.sprite.Group()
+    asteroids = pygame.sprite.Group()
+    shots = pygame.sprite.Group()
+    
+    Asteroid.containers = (asteroids, updatable, drawable)
+    AsteroidField.containers = updatable
+    field = AsteroidField()
+
     Player.containers = (updatable, drawable)
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT /2)
-    
-    asteroids = pygame.sprite.Group()
-    Asteroid.containers = (asteroids, updatable, drawable)
 
-    asteroidfield = pygame.sprite.Group()
-    AsteroidField.containers = (updatable)
-    field = AsteroidField()
+    Shot.containers = (shots, drawable, updatable)
+
+    dt = 0.0
 
     while True:
         log_state()
@@ -31,7 +36,6 @@ def main():
             if event.type == pygame.QUIT:
                 return
     
-        dt = clock.tick(60) / 1000
         screen.fill("black")
         updatable.update(dt)
 
@@ -41,12 +45,19 @@ def main():
                 print("Game over!")
                 sys.exit()
 
+            for shot in shots:
+                if shot.collides_with(asteroid):
+                    log_event("asteroid_shot")
+                    shot.kill()
+                    asteroid.split()
+
         for d in drawable:
             d.draw(screen)
 
         pygame.display.flip()
         print(dt)
 
+        dt = clock.tick(60) / 1000
 
 if __name__ == "__main__":
     main()
